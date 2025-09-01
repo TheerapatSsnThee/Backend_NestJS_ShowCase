@@ -18,7 +18,7 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true }) // อีเมลต้องไม่ซ้ำกัน
+  @Column({ unique: true })
   email: string;
 
   @Column()
@@ -30,10 +30,18 @@ export class User {
   @Column()
   last_name: string;
 
+  // --- ส่วนที่แก้ไข ---
+  @Column({ type: 'text', nullable: true })
+  address: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone_number: string | null;
+  // --- สิ้นสุดส่วนที่แก้ไข ---
+
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.USER, // ค่าเริ่มต้นคือ 'user'
+    default: UserRole.USER,
   })
   role: UserRole;
 

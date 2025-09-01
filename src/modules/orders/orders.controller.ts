@@ -1,7 +1,7 @@
-import { Controller, Post, Get, UseGuards, Request, Body } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Request, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CheckoutDto } from './dto/checkout.dto'; // <-- 1. Import DTO
+import { CheckoutDto } from './dto/checkout.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
@@ -11,19 +11,21 @@ export class OrdersController {
   @Post('checkout')
   checkout(
     @Request() req,
-    @Body() checkoutDto: CheckoutDto, // <-- 2. รับ Body ที่มี promotionCode
+    @Body() checkoutDto: CheckoutDto,
   ) {
     const userId = req.user.id;
-    // 3. ส่ง promotionCode ไปให้ Service
-    return this.ordersService.createOrderFromCart(
-      userId,
-      checkoutDto.promotionCode,
-    );
+    return this.ordersService.createOrderFromCart(userId, checkoutDto);
   }
 
   @Get()
   findUserOrders(@Request() req) {
     const userId = req.user.id;
     return this.ordersService.findUserOrders(userId);
+  }
+
+  @Get(':id')
+  findOne(@Request() req, @Param('id', ParseIntPipe) id: number) {
+      const userId = req.user.id;
+      return this.ordersService.findOne(id, userId);
   }
 }

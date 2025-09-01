@@ -6,8 +6,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
-export type CreateUserDto = Omit<User, 'id' | 'created_at' | 'updated_at'>;
+export type CreateUserDto = Omit<User, 'id' | 'created_at' | 'updated_at' | 'address' | 'phone_number'>;
 
 @Injectable()
 export class UsersService {
@@ -16,7 +17,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  //--- ฟังก์ชันสำหรับระบบ Auth ---
+  //--- Auth Functions ---
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.findByEmail(createUserDto.email);
@@ -36,7 +37,28 @@ export class UsersService {
     return this.usersRepository.findOneBy({ id });
   }
 
-  //--- ฟังก์ชันสำหรับ Admin ---
+  //--- User Profile Functions ---
+
+  async updateProfile(
+    userId: number,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<Omit<User, 'password_hash'>> {
+    const user = await this.usersRepository.preload({
+      id: userId,
+      ...updateProfileDto,
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const updatedUser = await this.usersRepository.save(user);
+    const { password_hash, ...result } = updatedUser;
+    return result;
+  }
+
+
+  //--- Admin Functions ---
 
   async findAll(options: {
     page: number;
@@ -64,9 +86,7 @@ export class UsersService {
     user.role = role;
     const updatedUser = await this.usersRepository.save(user);
 
-    // --- 🛠️ แก้ไขส่วนนี้ ---
     const { password_hash, ...result } = updatedUser;
     return result;
-    // --- สิ้นสุดส่วนแก้ไข ---
   }
 }

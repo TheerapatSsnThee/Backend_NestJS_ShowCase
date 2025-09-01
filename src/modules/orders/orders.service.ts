@@ -13,6 +13,7 @@ import { ProductVariant } from '../products/entities/product-variant.entity';
 import { CartService } from '../cart/cart.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { User } from '../users/entities/user.entity';
+import { CheckoutDto } from './dto/checkout.dto';
 
 @Injectable()
 export class OrdersService {
@@ -26,29 +27,42 @@ export class OrdersService {
     private productsRepository: Repository<Product>,
     @InjectRepository(ProductVariant)
     private variantsRepository: Repository<ProductVariant>,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
   ) {}
 
   async createOrderFromCart(
     userId: number,
-    promotionCode?: string,
+    checkoutDto: CheckoutDto,
   ): Promise<Order> {
+    const { 
+        promotionCode, 
+        shipping_name, 
+        shipping_phone, 
+        shipping_address_line1,
+        shipping_subdistrict,
+        shipping_district,
+        shipping_province,
+        shipping_postal_code
+    } = checkoutDto;
+    
+    // --- เพิ่มส่วนที่ขาดหายไป ---
     const cartItems = await this.cartService.getCart(userId);
     if (cartItems.length === 0) {
       throw new NotFoundException('Cart is empty');
     }
+    // --- สิ้นสุดส่วนที่เพิ่ม ---
 
     const productIds = cartItems.map((item) => item.product_id);
     const variantIds = cartItems
       .map((item) => item.variant_id)
       .filter((id) => id);
+      
     const productsInCart = await this.productsRepository.findBy({
       id: In(productIds),
     });
     const variantsInCart = await this.variantsRepository.findBy({
       id: In(variantIds),
     });
+
     const productMap = new Map(productsInCart.map((p) => [p.id, p]));
     const variantMap = new Map(variantsInCart.map((v) => [v.id, v]));
 
@@ -62,25 +76,18 @@ export class OrdersService {
 
       for (const item of cartItems) {
         const product = productMap.get(item.product_id);
-        const variant = item.variant_id
-          ? variantMap.get(item.variant_id)
-          : null;
+        const variant = item.variant_id ? variantMap.get(item.variant_id) : null;
         if (!product)
           throw new NotFoundException(`Product ID ${item.product_id} not found`);
 
         const stockEntity = variant || product;
         if (stockEntity.stock_quantity < item.quantity) {
-          throw new ConflictException(
-            `Not enough stock for product: ${product.title}`,
-          );
+          throw new ConflictException(`Not enough stock for product: ${product.title}`);
         }
         stockEntity.stock_quantity -= item.quantity;
-        await queryRunner.manager.save(
-          variant ? ProductVariant : Product,
-          stockEntity,
-        );
+        await queryRunner.manager.save(variant ? ProductVariant : Product, stockEntity);
 
-        const price = product.price;
+        const price = Number(product.price);
         subTotal += price * item.quantity;
         orderItems.push(
           queryRunner.manager.create(OrderItem, {
@@ -107,6 +114,13 @@ export class OrdersService {
         discount_amount: discount,
         status: OrderStatus.PENDING,
         items: orderItems,
+        shipping_name,
+        shipping_phone,
+        shipping_address_line1,
+        shipping_subdistrict,
+        shipping_district,
+        shipping_province,
+        shipping_postal_code,
       });
 
       const savedOrder = await queryRunner.manager.save(newOrder);
@@ -126,14 +140,14 @@ export class OrdersService {
     return this.ordersRepository.find({
       where: { user_id: userId },
       order: { created_at: 'DESC' },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'items.product.images'],
     });
   }
 
   async findOne(id: number, userId: number): Promise<Order> {
     const order = await this.ordersRepository.findOne({
       where: { id: id, user_id: userId },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'items.product.images', 'user'],
     });
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
@@ -156,28 +170,17 @@ export class OrdersService {
         throw new NotFoundException(`Order with ID ${orderId} not found.`);
       }
 
-      if (
-        order.status !== OrderStatus.PENDING &&
-        order.status !== OrderStatus.PAID
-      ) {
-        throw new BadRequestException(
-          `Cannot cancel an order with status: ${order.status}`,
-        );
+      if (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.PAID) {
+        throw new BadRequestException(`Cannot cancel an order with status: ${order.status}`);
       }
 
-      // --- 🛠️ แก้ไขไวยากรณ์ Loop ---
       for (const item of order.items) {
         if (item.variant_id) {
-          const variant = await queryRunner.manager.findOneBy(ProductVariant, {
-            id: item.variant_id,
-          });
-          if (variant) {
-            variant.stock_quantity += item.quantity;
-            await queryRunner.manager.save(variant);
-          }
+          await queryRunner.manager.increment(ProductVariant, { id: item.variant_id }, 'stock_quantity', item.quantity);
+        } else {
+          await queryRunner.manager.increment(Product, { id: item.product_id }, 'stock_quantity', item.quantity);
         }
       }
-      // --- สิ้นสุดส่วนแก้ไข ---
 
       order.status = OrderStatus.CANCELLED;
       const cancelledOrder = await queryRunner.manager.save(order);
@@ -192,30 +195,21 @@ export class OrdersService {
     }
   }
 
-  async findAll(options: {
-    page: number;
-    limit: number;
-    status?: OrderStatus;
-  }): Promise<any> {
+  async findAll(options: { page: number; limit: number; status?: OrderStatus }): Promise<any> {
     const { page, limit, status } = options;
     const query = this.ordersRepository
       .createQueryBuilder('order')
-      .leftJoinAndSelect('order.user', 'user')
+      .leftJoin('order.user', 'user')
+      .addSelect(['user.id', 'user.first_name', 'user.last_name', 'user.email'])
       .orderBy('order.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
+      
     if (status) {
       query.where('order.status = :status', { status });
     }
     const [data, total] = await query.getManyAndCount();
-    const sanitizedData = data.map((order) => {
-      if (order.user) {
-        const { password_hash, ...user } = order.user;
-        return { ...order, user };
-      }
-      return order;
-    });
-    return { data: sanitizedData, total, page, limit };
+    return { data, total, page, limit };
   }
 
   async updateStatus(orderId: number, status: OrderStatus): Promise<Order> {
@@ -230,19 +224,17 @@ export class OrdersService {
   async findOneForAdmin(orderId: number): Promise<Order> {
     const order = await this.ordersRepository.findOne({
       where: { id: orderId },
-      relations: ['items', 'items.product', 'user'],
+      relations: ['items', 'items.product', 'items.product.images', 'user', 'payment'],
     });
 
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
     }
 
-    // --- 🛠️ แก้ไขวิธีลบรหัสผ่าน ---
     if (order.user) {
       const { password_hash, ...user } = order.user;
       order.user = user as User;
     }
-    // --- สิ้นสุดส่วนแก้ไข ---
     
     return order;
   }

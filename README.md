@@ -1,98 +1,94 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+E-Commerce Platform API (Backend)
+This repository contains the backend source code for a comprehensive E-Commerce platform, built with the NestJS framework. It provides a robust, scalable, and secure RESTful API designed to support all necessary e-commerce functionalities, from user authentication to order processing.
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+ภาษาไทย
+Repository นี้ประกอบด้วยซอร์สโค้ดสำหรับระบบ Backend ของแพลตฟอร์มอีคอมเมิร์ซเต็มรูปแบบ พัฒนาด้วย NestJS โดยเป็น RESTful API ที่มีประสิทธิภาพ ปลอดภัย และสามารถขยายระบบได้ เพื่อรองรับฟังก์ชันการทำงานของอีคอมเมิร์ซที่จำเป็นทั้งหมด ตั้งแต่การยืนยันตัวตนผู้ใช้ไปจนถึงการจัดการคำสั่งซื้อ
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+✨ Features | คุณสมบัติเด่น
+Authentication & Authorization: Secure JWT-based authentication with password hashing (bcrypt) and role-based access control (Admin, Staff, User).
+Product Management: Full CRUD operations for products, including support for product variants and multiple image uploads.
+Hierarchical Categories: Support for nested product categories (parent-child relationships).
+High-Performance Shopping Cart: Utilizes Redis for fast and efficient shopping cart management.
+Transactional Order System: A robust checkout process that ensures data integrity through database transactions, handling stock reduction, promotion application, and order creation atomically.
+Promotion System: Flexible discount code management supporting both fixed-value and percentage-based promotions.
+Payment Workflow: A complete payment process for bank transfers, including slip upload and admin verification.
+Admin Dashboard: An endpoint for aggregating key business statistics, such as total sales, order counts, and new user registrations.
+Asynchronous Job Queues: Implements BullMQ to handle background tasks, improving API response times.
+Modular Architecture: Cleanly structured into distinct modules for high maintainability and scalability.
 
-## Description
+ระบบยืนยันตัวตนและจัดการสิทธิ์: การยืนยันตัวตนด้วย JWT ที่ปลอดภัย, การเข้ารหัสรหัสผ่าน (bcrypt) และระบบกำหนดสิทธิ์ตามบทบาท (Admin, Staff, User)
+การจัดการสินค้า: ระบบจัดการสินค้าแบบ CRUD เต็มรูปแบบ รองรับตัวเลือกสินค้า (Variants) และการอัปโหลดรูปภาพหลายรูป
+การจัดการหมวดหมู่แบบลำดับชั้น: รองรับหมวดหมู่สินค้าย่อย (ความสัมพันธ์แบบ Parent-Child)
+ระบบตะกร้าสินค้าประสิทธิภาพสูง: ใช้ Redis ในการจัดการตะกร้าสินค้าเพื่อความรวดเร็ว
+ระบบคำสั่งซื้อที่มั่นคง: กระบวนการสั่งซื้อที่รับประกันความถูกต้องของข้อมูลด้วย Database Transaction ครอบคลุมการตัดสต็อก, การใช้ส่วนลด, และการสร้างคำสั่งซื้อ
+ระบบโปรโมชั่น: การจัดการโค้ดส่วนลดที่ยืดหยุ่น รองรับทั้งแบบมูลค่าคงที่และแบบเปอร์เซ็นต์
+กระบวนการชำระเงิน: รองรับการชำระเงินโดยการโอนผ่านธนาคาร พร้อมระบบอัปโหลดสลิปและการยืนยันโดยผู้ดูแล
+แดชบอร์ดสำหรับผู้ดูแล: Endpoint สำหรับรวบรวมสถิติที่สำคัญ เช่น ยอดขายรวม, จำนวนคำสั่งซื้อ, และผู้ใช้ใหม่
+ระบบคิวสำหรับงานเบื้องหลัง: ใช้ BullMQ เพื่อจัดการงานที่ต้องใช้เวลาประมวลผลนาน (Asynchronous Tasks) เพื่อให้ API ตอบสนองได้รวดเร็วขึ้น
+สถาปัตยกรรมแบบโมดูล: โครงสร้างโค้ดที่แบ่งเป็นสัดส่วนชัดเจน ง่ายต่อการบำรุงรักษาและต่อยอด
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+🚀 Technology Stack | เทคโนโลยีที่ใช้
+Backend: NestJS, TypeScript, Express.js
+Database: MySQL (Primary), Redis (for Cart & Caching/Queues)
+ORM: TypeORM
+Authentication: Passport.js (JWT Strategy), bcrypt
+Job Queue: BullMQ
+File Storage: AWS S3 (with local storage fallback for development)
+Data Validation: class-validator, class-transformer
+Configuration: @nestjs/config (.env)
 
-## Project setup
+⚙️ Getting Started | การติดตั้งและใช้งาน
+Prerequisites | สิ่งที่ต้องมี
+Node.js (>=16.0)
 
-```bash
-$ npm install
-```
+NPM
+MySQL Server
+Redis Server
 
-## Compile and run the project
+Installation | การติดตั้ง
+Clone the repository:
+Bash
+git clone https://github.com/TheerapatSsnThee/Backend_NestJS_ShowCase.git
+cd Backend_NestJS_ShowCase
+Install dependencies:
 
-```bash
-# development
-$ npm run start
+Bash
+npm install
+Setup environment variables:
+Create a .env file in the root directory by copying the example file, then fill in your configuration details.
 
-# watch mode
-$ npm run start:dev
+Bash
+cp .env.example .env
+You will need to update the database credentials, JWT secret, and other settings within the .env file.
 
-# production mode
-$ npm run start:prod
-```
+Run the application:
+The application will start on the port specified in your .env file (default is 3001).
 
-## Run tests
+Bash
+# Development mode
+npm run start:dev
 
-```bash
-# unit tests
-$ npm run test
+📝 API Endpoints Overview | ภาพรวม API Endpoints
+A brief overview of the main available endpoints:
 
-# e2e tests
-$ npm run test:e2e
+Authentication
+POST /auth/register: Register a new user.
+POST /auth/login: Log in and receive a JWT.
+Products & Categories
+GET /products: Get a list of all products.
+GET /products/:id: Get details for a single product.
+GET /categories: Get a list of all categories.
 
-# test coverage
-$ npm run test:cov
-```
+Shopping Cart (Protected)
+GET /cart: View the current user's cart.
+POST /cart/items: Add an item to the cart.
+Orders (Protected)
+POST /orders/checkout: Create a new order from the cart.
+GET /orders: Get the current user's order history.
+Admin (Protected & Role-Restricted)
+GET /admin/dashboard/stats: Get dashboard statistics.
+GET /admin/users: Get a list of all users.
+POST /admin/products: Create a new product.
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+📄 License | ใบอนุญาต
+This project is licensed under the MIT License.

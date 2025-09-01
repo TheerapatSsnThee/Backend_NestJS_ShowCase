@@ -1,35 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import * as fs from 'fs';
+import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FileUploadService {
-  private readonly s3Client: S3Client;
-
-  constructor(private configService: ConfigService) {
-    this.s3Client = new S3Client({
-      region: this.configService.get<string>('AWS_REGION')!,
-      credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID')!,
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY')!,
-      },
-    });
-  }
-
+  /**
+   * จำลองการอัปโหลดไฟล์โดยการบันทึกไฟล์ลงในเครื่อง (Local Storage)
+   * สำหรับการทดสอบและพัฒนาก่อนนำขึ้น Production
+   */
   async uploadFile(file: Express.Multer.File): Promise<string> {
-    const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME')!;
-    const fileKey = `slips/${uuidv4()}-${file.originalname}`;
+    // 1. กำหนดตำแหน่งที่จะบันทึกไฟล์
+    // เราจะสร้างโฟลเดอร์ชื่อ 'uploads' ขึ้นมาใน root ของโปรเจกต์ backend
+    const uploadPath = path.join(__dirname, '..', '..', 'uploads');
 
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: fileKey,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    });
+    // 2. สร้างโฟลเดอร์ 'uploads' หากยังไม่มี
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
 
-    await this.s3Client.send(command);
+    // 3. สร้างชื่อไฟล์ใหม่ที่ไม่ซ้ำกัน
+    const fileExtension = path.extname(file.originalname);
+    const uniqueFilename = `${uuidv4()}${fileExtension}`;
+    const destination = path.join(uploadPath, uniqueFilename);
 
-    return `https://${bucketName}.s3.${this.configService.get<string>('AWS_REGION')!}.amazonaws.com/${fileKey}`;
+    // 4. บันทึกไฟล์ลงในตำแหน่งที่กำหนด
+    await fs.promises.writeFile(destination, file.buffer);
+
+    // 5. คืนค่าเป็น Path ที่สามารถเข้าถึงได้จากภายนอก (จำลอง)
+    // ใน Production จริง ค่านี้จะเป็น URL จาก S3
+    // แต่สำหรับการพัฒนา เราจะใช้ Path ที่สัมพันธ์กับเซิร์ฟเวอร์
+    // **หมายเหตุ:** เรายังต้องตั้งค่าให้ Express สามารถ Serve ไฟล์จากโฟลเดอร์นี้ได้
+    return `/uploads/${uniqueFilename}`;
   }
 }

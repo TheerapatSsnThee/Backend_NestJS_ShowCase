@@ -1,3 +1,4 @@
+// src/modules/categories/categories.controller.ts
 import {
   Controller,
   Get,
@@ -12,17 +13,17 @@ import {
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-// import { RolesGuard } from '../common/guards/roles.guard'; // หากต้องการใช้ RolesGuard
-// import { Roles } from '../common/decorators/roles.decorator'; // หากต้องการใช้ RolesGuard
-// import { UserRole } from '../users/entities/user.entity'; // หากต้องการใช้ RolesGuard
+import { RolesGuard } from '../../common/guards/roles.guard'; // 1. เปิด import
+import { Roles } from '../../common/decorators/roles.decorator'; // 2. เปิด import
+import { UserRole } from '../users/entities/user.entity';     // 3. เปิด import
 
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  // Endpoint นี้ป้องกันโดย Guard เพื่อให้เฉพาะ Admin สร้างได้
-  @UseGuards(JwtAuthGuard)
-  // @Roles(UserRole.ADMIN) // หากต้องการระบุว่าเป็น Admin เท่านั้น
+  // 🔐 ใช้ Guard 2 ชั้น: 1. ต้อง Login, 2. ต้องมี Role เป็น Admin
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN) // 4. ระบุว่าต้องมี Role เป็น ADMIN เท่านั้น
   @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
@@ -40,8 +41,9 @@ export class CategoriesController {
     return this.categoriesService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  // @Roles(UserRole.ADMIN)
+  // 🔐 ป้องกัน Endpoint สำหรับ Update
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -50,8 +52,9 @@ export class CategoriesController {
     return this.categoriesService.update(id, updateCategoryDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  // @Roles(UserRole.ADMIN)
+  // 🔐 ป้องกัน Endpoint สำหรับ Delete
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.remove(id);

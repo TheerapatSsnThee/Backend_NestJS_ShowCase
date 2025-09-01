@@ -6,8 +6,9 @@ import {
   IsArray,
   ValidateNested,
   IsInt,
+  IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 class CreateVariantDto {
   @IsString()
@@ -18,6 +19,7 @@ class CreateVariantDto {
   @IsNotEmpty()
   value: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   stock_quantity: number;
@@ -32,15 +34,36 @@ export class CreateProductDto {
   @IsNotEmpty()
   description: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   price: number;
 
+  @Type(() => Number)
   @IsInt()
   category_id: number;
+  
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  stock_quantity: number;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateVariantDto)
-  variants: CreateVariantDto[];
+  @Transform(({ value }) => {
+    if (value && typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return value; 
+      }
+    }
+    return value;
+  })
+  variants?: CreateVariantDto[];
+
+  @IsOptional()
+  images?: any[];
 }
