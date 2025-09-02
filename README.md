@@ -89,6 +89,3 @@ Admin (Protected & Role-Restricted)
 GET /admin/dashboard/stats: Get dashboard statistics.
 GET /admin/users: Get a list of all users.
 POST /admin/products: Create a new product.
-
-📄 License | ใบอนุญาต
-This project is licensed under the MIT License.
